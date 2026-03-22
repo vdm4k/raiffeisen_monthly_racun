@@ -1,9 +1,9 @@
 {
   "Grocery": [
     "lidl", "maxi", "univerexport", "univerexport-mp", "k-food", "dm filijala", "dm ",
-    "vero", "jasmin", "jasmin -", "jasmin lotos", "carolija", "mp480", "mp420", "mp577",
-    "mp083", "mp159", "nicefoods", "crna ovca", "d.trg", "salajka", "kej ", "masarikova",
-    "mix markt", "mp466", "mp493", "micromarket"
+    "vero", "jasmin", "jasmin -", "jasmin lotos", "carolija", "mp\\d+",
+    "nicefoods", "crna ovca", "d.trg", "salajka", "kej ", "masarikova",
+    "mix markt", "micromarket"
   ],
   "Health": [
     "apoteka", "ordinacija", "taita", "lilly", "drmax", "osiguranje", "prosmile"
@@ -26,6 +26,6 @@
     "tramontana", "restoran", "tokio sushi"
   ],
   "Travel": [
-    "hotel", "rent a car", "stara carsija", "resort", "case di pino"
+    "hotel", "rent a car", "resort"
   ]
 }
