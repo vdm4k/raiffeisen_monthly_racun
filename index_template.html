@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bank Statements - Select Months</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            margin: 0;
+            padding: 2rem;
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+            color: #e8e8e8;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 2rem;
+            font-weight: 300;
+            letter-spacing: 0.05em;
+        }
+
+        .index-view {
+            display: block;
+        }
+
+        .index-view.hidden {
+            display: none;
+        }
+
+        .analytics-view {
+            display: none;
+        }
+
+        .analytics-view.visible {
+            display: block;
+        }
+
+        .plates-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 1rem;
+            max-width: 900px;
+            margin: 0 auto 2rem;
+        }
+
+        .month-plate {
+            padding: 1.25rem 1rem;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .month-plate:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .month-plate.selected {
+            border-color: #fff;
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
+        }
+
+        .month-plate .month-name {
+            font-size: 1rem;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .month-plate .year {
+            font-size: 0.85rem;
+            opacity: 0.85;
+        }
+
+        .show-btn {
+            display: block;
+            margin: 0 auto 1rem;
+            padding: 0.75rem 2rem;
+            font-size: 1rem;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .show-btn:hover {
+            background: linear-gradient(135deg, #2980b9, #1f6dad);
+        }
+
+        .show-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .back-to-index {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.2rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: #e8e8e8;
+            font-size: 0.95rem;
+            cursor: pointer;
+            margin-bottom: 1.5rem;
+        }
+
+        .back-to-index:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .selected-hint {
+            text-align: center;
+            margin-bottom: 1rem;
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+
+        .year-buttons {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .year-btn {
+            padding: 0.4rem 1rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 8px;
+            color: #e8e8e8;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .year-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .analytics-main {
+            display: block;
+        }
+
+        .analytics-main.hidden {
+            display: none;
+        }
+
+        .analytics-detail {
+            display: none;
+        }
+
+        .analytics-detail.visible {
+            display: block;
+        }
+
+        .savings-summary {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            padding: 0.75rem 1.5rem;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 10px;
+            display: inline-block;
+        }
+
+        .savings-value {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .savings-value.positive {
+            color: #2ecc71;
+        }
+
+        .savings-value.negative {
+            color: #e74c3c;
+        }
+
+        .charts {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .chart-container {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 1.5rem;
+            max-width: 450px;
+            cursor: pointer;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 280px;
+        }
+
+        .category-buttons {
+            margin-top: 2rem;
+            text-align: center;
+        }
+
+        .cat-btn {
+            padding: 0.6rem 1.25rem;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            color: #e8e8e8;
+            cursor: pointer;
+            margin: 0.25rem;
+        }
+
+        .back-btn {
+            padding: 0.6rem 1.2rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: #e8e8e8;
+            cursor: pointer;
+            margin-bottom: 1rem;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .tx-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .tx-table td {
+            padding: 0.4rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .tx-amount {
+            text-align: right;
+        }
+
+        .top3-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .top3-list li {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .top5PlacesList {
+            list-style: none;
+            padding: 0;
+        }
+
+        .top5PlacesList li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.6rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .top5PlacesList .top3-badge {
+            display: inline-block;
+            width: 1.5rem;
+            height: 1.5rem;
+            line-height: 1.5rem;
+            text-align: center;
+            background: rgba(46, 204, 113, 0.3);
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin-right: 0.5rem;
+        }
+
+        .top5PlacesList .top3-amount {
+            font-variant-numeric: tabular-nums;
+            font-weight: 500;
+        }
+
+        .pct-badge {
+            display: inline-block;
+            margin-left: 0.5rem;
+            padding: 0.15rem 0.4rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            font-size: 0.8rem;
+            opacity: 0.9;
+        }
+
+        .place-details-list details {
+            margin-bottom: 0.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .place-details-list details summary {
+            padding: 0.6rem 1rem;
+            cursor: pointer;
+            font-weight: 500;
+            list-style: none;
+        }
+
+        .place-details-list details summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .place-details-list details summary::before {
+            content: '▶';
+            display: inline-block;
+            margin-right: 0.5rem;
+            font-size: 0.7rem;
+            transition: transform 0.2s;
+        }
+
+        .place-details-list details[open] summary::before {
+            transform: rotate(90deg);
+        }
+
+        .place-details-list details ul {
+            list-style: none;
+            padding: 0 1rem 1rem;
+            margin: 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .place-details-list details li {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.4rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            font-size: 0.9rem;
+        }
+
+        .chart-container.balance-chart {
+            max-width: 100%;
+            width: 100%;
+        }
+
+        .chart-container.balance-chart .chart-wrapper {
+            height: 220px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="indexView" class="index-view">
+        <h1>Select Months for Analytics</h1>
+        <p class="selected-hint">Click plates to select months. Click a year to select/deselect all months in that year.
+        </p>
+        <div class="year-buttons" id="yearButtons"></div>
+        <div class="plates-grid" id="platesGrid"></div>
+        <button class="show-btn" id="showBtn" disabled>Show Analytics</button>
+    </div>
+
+    <div id="analyticsView" class="analytics-view">
+        <button class="back-to-index" onclick="goToIndex()">← Back to Months</button>
+        <div id="analyticsContent"></div>
+    </div>
+
+    <script>
+        const plates = __PLATES_JSON__;
+        const analyticsByMonth = __ANALYTICS_JSON__;
+        const currency = __CURRENCY__;
+
+        function renderPlates() {
+            const grid = document.getElementById('platesGrid');
+            const yearButtonsEl = document.getElementById('yearButtons');
+            grid.innerHTML = plates.map(p => `
+                <div class="month-plate" data-key="${p.key}" data-year="${p.year}" style="background: ${p.color}">
+                    <div class="month-name">${p.month_name}</div>
+                    <div class="year">${p.year}</div>
+                </div>
+            `).join('');
+
+            const years = [...new Set(plates.map(p => p.year))].sort((a, b) => a - b);
+            yearButtonsEl.innerHTML = years.map(y => `<button class="year-btn" data-year="${y}">${y}</button>`).join('');
+
+            const selected = new Set();
+            const updateBtn = () => { document.getElementById('showBtn').disabled = selected.size === 0; };
+
+            grid.querySelectorAll('.month-plate').forEach(plate => {
+                plate.addEventListener('click', () => {
+                    const key = plate.dataset.key;
+                    if (selected.has(key)) {
+                        selected.delete(key);
+                        plate.classList.remove('selected');
+                    } else {
+                        selected.add(key);
+                        plate.classList.add('selected');
+                    }
+                    updateBtn();
+                });
+            });
+
+            yearButtonsEl.querySelectorAll('.year-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const year = parseInt(btn.dataset.year, 10);
+                    const yearPlates = grid.querySelectorAll(`.month-plate[data-year="${year}"]`);
+                    const keys = Array.from(yearPlates).map(p => p.dataset.key);
+                    const allSelected = keys.every(k => selected.has(k));
+                    if (allSelected) {
+                        keys.forEach(k => selected.delete(k));
+                        yearPlates.forEach(p => p.classList.remove('selected'));
+                    } else {
+                        keys.forEach(k => selected.add(k));
+                        yearPlates.forEach(p => p.classList.add('selected'));
+                    }
+                    updateBtn();
+                });
+            });
+
+            document.getElementById('showBtn').addEventListener('click', () => {
+                if (selected.size === 0) return;
+                showAnalytics(Array.from(selected));
+            });
+        }
+
+        function showAnalytics(monthKeys) {
+            const combined = combineAnalytics(monthKeys);
+            const html = buildAnalyticsHtml(combined);
+            document.getElementById('analyticsContent').innerHTML = html;
+            document.getElementById('indexView').classList.add('hidden');
+            document.getElementById('analyticsView').classList.add('visible');
+            window.analyticsData = combined;
+            setTimeout(() => initCharts(), 50);
+        }
+
+        function combineAnalytics(monthKeys) {
+            const category_data = {};
+            let total_income = 0, total_outcomes = 0;
+            const income_txs = [];
+            const outcome_txs = [];
+            const outgoings_by_kw = {};
+
+            const balance_history = [];
+            for (const key of monthKeys) {
+                const a = analyticsByMonth[key];
+                if (!a) continue;
+                total_income += a.total_income || 0;
+                total_outcomes += a.total_outcomes || 0;
+                balance_history.push(...(a.balance_history || []));
+                const incData = a.income_data || {};
+                for (const cat of Object.keys(incData)) {
+                    for (const t of (incData[cat]?.transactions || [])) {
+                        income_txs.push(t);
+                    }
+                }
+                for (const cat in a.category_data || {}) {
+                    if (!category_data[cat]) category_data[cat] = { total: 0, transactions: [], by_keyword: {} };
+                    const src = a.category_data[cat];
+                    category_data[cat].total += src.total || 0;
+                    category_data[cat].transactions.push(...(src.transactions || []));
+                    for (const kw in src.by_keyword || {}) {
+                        if (!category_data[cat].by_keyword[kw]) category_data[cat].by_keyword[kw] = [];
+                        category_data[cat].by_keyword[kw].push(...(src.by_keyword[kw] || []));
+                    }
+                }
+                for (const t of (a.outgoings_data?.Outgoings?.transactions || [])) {
+                    outcome_txs.push(t);
+                }
+            }
+
+            for (const cat in category_data) {
+                const c = category_data[cat];
+                const sorted = c.transactions.slice().sort((a, b) => b.amount - a.amount);
+                c.top_10 = sorted.slice(0, 10);
+                const byKw = c.by_keyword || {};
+                const places = Object.entries(byKw).map(([kw, txs]) => ({
+                    place: kw,
+                    total: txs.reduce((s, t) => s + t.amount, 0),
+                    count: txs.length
+                })).sort((a, b) => b.total - a.total);
+                c.top_5_places = places.slice(0, 5);
+            }
+
+            balance_history.sort((a, b) => {
+                const parse = (s) => { const p = s.split('.'); return p[2] + p[1] + p[0]; };
+                return parse(a.date).localeCompare(parse(b.date));
+            });
+
+            function categorizeIncome(desc) {
+                const d = (desc || '').toLowerCase();
+                if (d.includes('unovcavanje') && d.includes('mobilnog keša')) return 'Mobile kesh';
+                return 'Income';
+            }
+            const income_by_cat = { 'Income': [], 'Mobile kesh': [] };
+            for (const t of income_txs) {
+                const cat = categorizeIncome(t.description);
+                if (!income_by_cat[cat]) income_by_cat[cat] = [];
+                income_by_cat[cat].push(t);
+            }
+            const income_by_kw = {};
+            for (const t of income_txs) {
+                const kw = extractKeyword(t.description);
+                if (!income_by_kw[kw]) income_by_kw[kw] = [];
+                income_by_kw[kw].push(t);
+            }
+            for (const t of outcome_txs) {
+                const kw = extractKeyword(t.description);
+                if (!outgoings_by_kw[kw]) outgoings_by_kw[kw] = [];
+                outgoings_by_kw[kw].push(t);
+            }
+
+            const sorted_incomes = [...income_txs].sort((a, b) => b.amount - a.amount).slice(0, 10);
+            const sorted_outcomes = [...outcome_txs].sort((a, b) => b.amount - a.amount).slice(0, 10);
+            const inc_places = Object.entries(income_by_kw).map(([kw, txs]) => ({
+                place: kw, total: txs.reduce((s, t) => s + t.amount, 0), count: txs.length
+            })).sort((a, b) => b.total - a.total).slice(0, 5);
+            const out_places = Object.entries(outgoings_by_kw).map(([kw, txs]) => ({
+                place: kw, total: txs.reduce((s, t) => s + t.amount, 0), count: txs.length
+            })).sort((a, b) => b.total - a.total).slice(0, 5);
+
+            const income_data = {
+                Incomes: {
+                    total: total_income,
+                    transactions: income_txs,
+                    by_keyword: income_by_kw,
+                    top_10: sorted_incomes,
+                    top_5_places: inc_places,
+                    is_income: true
+                }
+            };
+            for (const cat of Object.keys(income_by_cat)) {
+                if (income_by_cat[cat].length === 0) continue;
+                const txs = income_by_cat[cat];
+                const byKw = {};
+                for (const t of txs) {
+                    const kw = extractKeyword(t.description);
+                    if (!byKw[kw]) byKw[kw] = [];
+                    byKw[kw].push(t);
+                }
+                const places = Object.entries(byKw).map(([kw, txs]) => ({
+                    place: kw, total: txs.reduce((s, t) => s + t.amount, 0), count: txs.length
+                })).sort((a, b) => b.total - a.total).slice(0, 5);
+                income_data[cat] = {
+                    total: txs.reduce((s, t) => s + t.amount, 0),
+                    transactions: txs,
+                    by_keyword: byKw,
+                    top_10: [...txs].sort((a, b) => b.amount - a.amount).slice(0, 10),
+                    top_5_places: places,
+                    is_income: true
+                };
+            }
+            return {
+                category_data,
+                income_data,
+                balance_history,
+                outgoings_data: {
+                    Outgoings: {
+                        total: total_outcomes,
+                        transactions: outcome_txs,
+                        by_keyword: outgoings_by_kw,
+                        top_10: sorted_outcomes,
+                        top_5_places: out_places
+                    }
+                },
+                total_income,
+                total_outcomes
+            };
+        }
+
+        function extractKeyword(desc) {
+            const skip = ['srb', 'novi', 'sad', 'rs', 'rn:', 'na', 'doo', 'ad', 'beograd'];
+            const parts = (desc || '').replace(/[,.]/g, ' ').split(/\s+/);
+            for (const p of parts) {
+                const c = p.replace(/[.-]/g, '');
+                if (!c || skip.includes(c.toLowerCase()) || /^\d+$/.test(c)) continue;
+                if (c.length >= 2 && /^[a-zA-Z]/.test(c)) return c;
+            }
+            return parts[0] ? parts[0].slice(0, 20) : 'Other';
+        }
+
+        function buildAnalyticsHtml(data) {
+            const cd = data.category_data || {};
+            const labels = Object.keys(cd);
+            const totals = labels.map(l => cd[l].total || 0);
+            const colors = ['#2ecc71', '#3498db', '#e74c3c', '#9b59b6', '#95a5a6', '#f39c12'];
+            const details = {};
+            for (const cat of labels) {
+                details[cat] = { ...cd[cat], is_income: false };
+            }
+            const incData = data.income_data || {};
+            for (const cat of Object.keys(incData)) {
+                details[cat] = { ...incData[cat], is_income: true };
+            }
+            if (data.outgoings_data?.Outgoings) details['Outgoings'] = { ...data.outgoings_data.Outgoings, is_income: false };
+            const savings = (data.total_income || 0) - (data.total_outcomes || 0);
+            const incBtns = Object.keys(incData).filter(c => c !== 'Incomes').map(c => `<button class="cat-btn" data-cat="${c}">${c}</button>`).join('');
+            const btns = incBtns +
+                labels.map((l, i) => `<button class="cat-btn" data-cat="${l}">${l}</button>`).join('');
+            return `
+            <div id="analyticsMain" class="analytics-main">
+                <h1>Spending Overview</h1>
+                <div class="savings-summary"><span>Savings: </span><span class="savings-value" id="savingsVal">` + savings.toLocaleString() + `</span> ` + currency + `</div>
+                <div class="charts">
+                    <div class="chart-container"><h3>Incomes vs Outgoings</h3><div class="chart-wrapper"><canvas id="ioChart"></canvas></div></div>
+                    <div class="chart-container"><h3>Spending by Category</h3><div class="chart-wrapper"><canvas id="pieChart"></canvas></div></div>
+                    <div class="chart-container"><h3>Totals</h3><div class="chart-wrapper"><canvas id="barChart"></canvas></div></div>
+                    <div class="chart-container balance-chart"><h3>Account Balance Over Time</h3><div class="chart-wrapper"><canvas id="balanceLineChart"></canvas></div></div>
+                </div>
+                <div class="category-buttons">` + btns + `</div>
+            </div>
+            <div id="analyticsDetail" class="analytics-detail">
+                <button class="back-btn" onclick="analyticsDetailBack()">← Back</button>
+                <h2 id="detailTitle"></h2>
+                <div id="detailTotal"></div>
+                <div class="section"><h3 id="top5Title">Top 5 Places</h3><ul class="top5PlacesList" id="top5PlacesList"></ul></div>
+                <div class="section"><h3 id="top10Title">Top 10 Spendings</h3><ul class="top5PlacesList" id="top10List"></ul></div>
+                <div class="section">
+                    <h3>Browse by Place</h3>
+                    <div id="placeDetailsList" class="place-details-list"></div>
+                </div>
+            </div>`;
+        }
+
+        function initCharts() {
+            const d = window.analyticsData;
+            if (!d) return;
+            const cd = d.category_data || {};
+            const labels = Object.keys(cd);
+            const totals = labels.map(l => cd[l].total || 0);
+            const colors = ['#2ecc71', '#3498db', '#e74c3c', '#9b59b6', '#95a5a6'];
+            const details = {};
+            for (const cat of labels) details[cat] = { ...cd[cat], is_income: false };
+            for (const cat of Object.keys(d.income_data || {})) {
+                details[cat] = { ...d.income_data[cat], is_income: true };
+            }
+            if (d.outgoings_data?.Outgoings) details['Outgoings'] = { ...d.outgoings_data.Outgoings, is_income: false };
+            const ti = d.total_income || 0, to = d.total_outcomes || 0;
+            const ioData = ti + to > 0 ? [ti, to] : [1, 1];
+            document.getElementById('savingsVal').classList.add((ti - to) >= 0 ? 'positive' : 'negative');
+            new Chart(document.getElementById('ioChart').getContext('2d'), {
+                type: 'doughnut', data: { labels: ['Incomes', 'Outgoings'], datasets: [{ data: ioData, backgroundColor: ['#27ae60', '#e74c3c'] }] },
+                options: { onClick: (e, els) => { if (els.length) showDetail(els[0].index === 0 ? 'Incomes' : 'Outgoings'); } }
+            });
+            new Chart(document.getElementById('pieChart').getContext('2d'), {
+                type: 'doughnut', data: { labels, datasets: [{ data: totals, backgroundColor: colors }] },
+                options: { onClick: (e, els) => { if (els.length) showDetail(labels[els[0].index]); } }
+            });
+            new Chart(document.getElementById('barChart').getContext('2d'), {
+                type: 'bar', data: { labels, datasets: [{ data: totals, backgroundColor: colors }] },
+                options: { indexAxis: 'y', onClick: (e, els) => { if (els.length) showDetail(labels[els[0].index]); } }
+            });
+            const balanceHistory = d.balance_history || [];
+            const balanceChartEl = document.querySelector('.chart-container.balance-chart');
+            if (balanceChartEl && balanceHistory.length === 0) balanceChartEl.style.display = 'none';
+            if (balanceHistory.length > 0) {
+                const balLabels = balanceHistory.map(p => p.date);
+                const balData = balanceHistory.map(p => p.balance);
+                new Chart(document.getElementById('balanceLineChart').getContext('2d'), {
+                    type: 'line',
+                    data: { labels: balLabels, datasets: [{ label: 'Balance', data: balData, borderColor: '#3498db', backgroundColor: 'rgba(52,152,219,0.1)', fill: true, tension: 0.2 }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#aaa', maxRotation: 45 } }, y: { ticks: { color: '#aaa' } } } }
+                });
+            }
+            document.querySelectorAll('#analyticsContent .cat-btn').forEach(b => {
+                b.onclick = () => showDetail(b.dataset.cat);
+            });
+            window.analyticsDetails = details;
+        }
+
+        function showDetail(cat) {
+            const d = window.analyticsDetails?.[cat] || {};
+            const top5 = d.top_5_places || [];
+            const top10 = d.top_10 || [];
+            const byKeyword = d.by_keyword || {};
+            const isIncome = d.is_income || false;
+
+            document.getElementById('detailTitle').textContent = cat;
+            document.getElementById('detailTotal').textContent = 'Total: ' + (d.total || 0).toLocaleString() + ' ' + currency;
+            document.getElementById('top5Title').textContent = isIncome ? 'Top 5 Income Sources' : 'Top 5 Places';
+            document.getElementById('top10Title').textContent = isIncome ? 'Top 10 Incomes' : 'Top 10 Spendings';
+
+            const pctBase = d.total || 1;
+            document.getElementById('top5PlacesList').innerHTML = top5.length ? top5.map((p, i) => {
+                const pct = ((p.total / pctBase) * 100).toFixed(1);
+                return `<li><span><span class="top3-badge">${i + 1}</span>${p.place}</span><span class="top3-amount">${p.total.toLocaleString()} ${currency} <span class="pct-badge">${pct}%</span></span></li>`;
+            }).join('') : '<li>No data</li>';
+            document.getElementById('top10List').innerHTML = top10.length ? top10.map((t, i) => {
+                const pct = ((t.amount / (d.total || 1)) * 100).toFixed(1);
+                return `<li><span><span class="top3-badge">${i + 1}</span>${t.description}</span><span class="top3-amount">${t.amount.toLocaleString()} ${currency} <span class="pct-badge">${pct}%</span></span></li>`;
+            }).join('') : '<li>No data</li>';
+
+            const kwEntries = Object.entries(byKeyword).sort((a, b) => b[1].reduce((s, t) => s + t.amount, 0) - a[1].reduce((s, t) => s + t.amount, 0));
+            const placeList = document.getElementById('placeDetailsList');
+            placeList.innerHTML = kwEntries.map(([kw, txs]) => {
+                const total = txs.reduce((s, t) => s + t.amount, 0);
+                const sorted = txs.slice().sort((a, b) => b.amount - a.amount);
+                return `<details><summary>${kw} - ${total.toLocaleString()} ${currency} (${txs.length} times)</summary><ul>${sorted.map(t => `<li><span>${t.date} ${t.description}</span><span class="tx-amount">${t.amount.toLocaleString()} ${currency}</span></li>`).join('')}</ul></details>`;
+            }).join('');
+
+            document.getElementById('analyticsMain').classList.add('hidden');
+            document.getElementById('analyticsDetail').classList.add('visible');
+        }
+
+        function analyticsDetailBack() {
+            document.getElementById('analyticsDetail').classList.remove('visible');
+            document.getElementById('analyticsMain').classList.remove('hidden');
+        }
+
+        function goToIndex() {
+            document.getElementById('analyticsView').classList.remove('visible');
+            document.getElementById('indexView').classList.remove('hidden');
+        }
+
+        renderPlates();
+    </script>
+</body>
+
+</html>

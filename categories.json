@@ -1,0 +1,31 @@
+{
+  "Grocery": [
+    "lidl", "maxi", "univerexport", "univerexport-mp", "k-food", "dm filijala", "dm ",
+    "vero", "jasmin", "jasmin -", "jasmin lotos", "carolija", "mp480", "mp420", "mp577",
+    "mp083", "mp159", "nicefoods", "crna ovca", "d.trg", "salajka", "kej ", "masarikova",
+    "mix markt", "mp466", "mp493", "micromarket"
+  ],
+  "Health": [
+    "apoteka", "ordinacija", "taita", "lilly", "drmax", "osiguranje", "prosmile"
+  ],
+  "Clothes": [
+    "h&m", "cortix", "springfield", "replay", "timberland", "parfois", "reserved",
+    "nike", "zara", "fashion", "superdry", "n sport", "n-sport", "nsport", "beosport",
+    "levis", "calvin klein", "skechers", "decathlon", "cc", "planika"
+  ],
+  "Gadgets": [
+    "istyle", "gigatron", "gigantron"
+  ],
+  "Phone": [
+    "yettel", "sbb"
+  ],
+  "Utilities": [
+    "gas", "eps ad beograd", "informatika"
+  ],
+  "Restaurants": [
+    "tramontana", "restoran", "tokio sushi"
+  ],
+  "Travel": [
+    "hotel", "rent a car", "stara carsija", "resort", "case di pino"
+  ]
+}
